@@ -1,0 +1,677 @@
+# ui.kv — единый визуальный стиль
+# ВАЖНО: все <XxxRow@BoxLayout> объявлены СТРОГО до экранов.
+
+# ============ ДИНАМИЧЕСКИЕ КЛАССЫ ============
+
+<MenuRow@BoxLayout>:
+    item: None
+    size_hint_y: None
+    height: dp(70)
+    Label:
+        text: (root.item['name'] if root.item else '') + '\n' + ((root.item['category'] + ' · ' + str(root.item['price']) + '₽') if root.item else '')
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.size
+    Button:
+        text: '+ В заказ'
+        size_hint_x: None
+        width: dp(110)
+        disabled: (not root.item) or (not root.item.get('is_available', True))
+        on_release: app.root.get_screen('menu').add_to_cart(root.item)
+    Button:
+        text: 'Изменить'
+        size_hint_x: None
+        width: dp(95)
+        opacity: 1 if app.root.get_screen('menu').is_staff else 0
+        disabled: not app.root.get_screen('menu').is_staff
+        on_release: app.root.get_screen('menu').open_item(root.item)
+
+
+<CartRow@BoxLayout>:
+    item: None
+    size_hint_y: None
+    height: dp(55)
+    Label:
+        text: (root.item['name'] + '  ×' + str(root.item['qty']) + '  = ' + str(root.item['price'] * root.item['qty']) + '₽') if root.item else ''
+    Button:
+        text: '−'
+        size_hint_x: None
+        width: dp(45)
+        on_release: app.root.get_screen('cart').change_qty(root.item, -1)
+    Button:
+        text: '+'
+        size_hint_x: None
+        width: dp(45)
+        on_release: app.root.get_screen('cart').change_qty(root.item, 1)
+
+
+<OrderRow@BoxLayout>:
+    item: None
+    size_hint_y: None
+    height: dp(60)
+    Label:
+        text: ('#' + str(root.item['id']) + '  ' + root.item['status'] + '  ' + str(root.item['total']) + '₽') if root.item else ''
+    Button:
+        text: 'Детали'
+        size_hint_x: None
+        width: dp(90)
+        on_release: app.root.get_screen('orders').open_order(root.item)
+
+
+<FavRow@BoxLayout>:
+    item: None
+    size_hint_y: None
+    height: dp(55)
+    Label:
+        text: ('Блюдо ID: ' + str(root.item['menu_item_id'])) if root.item else ''
+    Button:
+        text: 'Удалить'
+        size_hint_x: None
+        width: dp(100)
+        on_release: app.root.get_screen('favorites').delete_fav(root.item)
+
+
+<PromoRow@BoxLayout>:
+    item: None
+    size_hint_y: None
+    height: dp(70)
+    Label:
+        text: (root.item['description'] + '  −' + str(root.item['discount']) + '%  ' + root.item['status']) if root.item else ''
+    Button:
+        text: 'Удалить'
+        size_hint_x: None
+        width: dp(90)
+        on_release: app.root.get_screen('promotions').delete_promo(root.item)
+
+
+<LoyaltyRow@BoxLayout>:
+    item: None
+    size_hint_y: None
+    height: dp(50)
+    Label:
+        text: (root.item['operation_type'] + '  ' + str(root.item['points']) + ' б.  ' + root.item['date'][:10]) if root.item else ''
+
+
+# ============ КНОПКИ ============
+<FlatButton@Button>:
+    background_normal: ''
+    background_color: 0.15, 0.55, 0.9, 1
+    color: 1, 1, 1, 1
+    bold: True
+
+
+<SecondaryButton@Button>:
+    background_normal: ''
+    background_color: 0.85, 0.85, 0.85, 1
+    color: 0.1, 0.1, 0.1, 1
+
+
+# ============ LOGIN ============
+<LoginScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 25
+        spacing: 15
+        Label:
+            text: 'Вход'
+            font_size: 32
+            bold: True
+            size_hint_y: None
+            height: 60
+        TextInput:
+            id: phone
+            hint_text: 'Телефон (только цифры)'
+            input_filter: 'int'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        TextInput:
+            id: password
+            hint_text: 'Пароль'
+            password: True
+            multiline: False
+            size_hint_y: None
+            height: 50
+        Label:
+            text: root.error_text
+            color: 0.9, 0.2, 0.2, 1
+            size_hint_y: None
+            height: 30
+        FlatButton:
+            text: 'Войти'
+            size_hint_y: None
+            height: 55
+            on_release: root.do_login()
+            disabled: root.loading
+        SecondaryButton:
+            text: 'Регистрация'
+            size_hint_y: None
+            height: 50
+            on_release: root.go_register()
+        Widget:
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ REGISTER ============
+<RegisterScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 25
+        spacing: 15
+        Label:
+            text: 'Регистрация'
+            font_size: 28
+            bold: True
+            size_hint_y: None
+            height: 60
+        TextInput:
+            id: name
+            hint_text: 'Имя'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        TextInput:
+            id: phone
+            hint_text: 'Телефон'
+            input_filter: 'int'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        TextInput:
+            id: password
+            hint_text: 'Пароль (мин. 4)'
+            password: True
+            multiline: False
+            size_hint_y: None
+            height: 50
+        Label:
+            text: root.error_text
+            color: 0.9, 0.2, 0.2, 1
+            size_hint_y: None
+            height: 30
+        FlatButton:
+            text: 'Создать аккаунт'
+            size_hint_y: None
+            height: 55
+            on_release: root.do_register()
+            disabled: root.loading
+        SecondaryButton:
+            text: 'Назад'
+            size_hint_y: None
+            height: 50
+            on_release: root.go_back()
+        Widget:
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ HOME ============
+<HomeScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 12
+        Label:
+            text: 'Привет, ' + root.user_name
+            font_size: 26
+            bold: True
+            size_hint_y: None
+            height: 55
+        Label:
+            text: 'Бонусов: ' + root.user_balance
+            font_size: 16
+            size_hint_y: None
+            height: 30
+        FlatButton:
+            text: 'Меню'
+            on_release: root.go('menu')
+        FlatButton:
+            text: 'Корзина'
+            on_release: root.go('cart')
+        FlatButton:
+            text: 'Мои заказы'
+            on_release: root.go('orders')
+        FlatButton:
+            text: 'Избранное'
+            on_release: root.go('favorites')
+        FlatButton:
+            text: 'Акции'
+            on_release: root.go('promotions')
+        FlatButton:
+            text: 'Бонусы'
+            on_release: root.go('loyalty')
+        FlatButton:
+            text: 'Профиль'
+            on_release: root.go('profile')
+        SecondaryButton:
+            text: 'Выйти'
+            on_release: root.logout()
+
+
+# ============ PROFILE ============
+<ProfileScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 15
+        spacing: 10
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: 'Профиль'
+                font_size: 20
+                bold: True
+        Label:
+            text: 'ID: ' + str(root.user_id) + '   Бонусов: ' + root.balance
+            size_hint_y: None
+            height: 30
+        Label:
+            text: 'Регистрация: ' + root.reg_date
+            size_hint_y: None
+            height: 30
+            color: 0.4, 0.4, 0.4, 1
+        Label:
+            text: 'Имя'
+            size_hint_y: None
+            height: 25
+        TextInput:
+            id: name_input
+            text: root.name
+            multiline: False
+            size_hint_y: None
+            height: 50
+        Label:
+            text: 'Телефон'
+            size_hint_y: None
+            height: 25
+        TextInput:
+            id: phone_input
+            text: root.phone
+            input_filter: 'int'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        FlatButton:
+            text: 'Сохранить'
+            size_hint_y: None
+            height: 55
+            on_release: root.save()
+            disabled: root.loading
+        SecondaryButton:
+            text: 'Удалить аккаунт'
+            size_hint_y: None
+            height: 50
+            on_release: root.delete_account()
+        Widget:
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ MENU ============
+<MenuScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.3
+                on_release: root.go_back()
+            Label:
+                text: 'Меню'
+                font_size: 20
+                bold: True
+            SecondaryButton:
+                text: 'Корзина'
+                size_hint_x: 0.3
+                on_release: root.go_cart()
+            FlatButton:
+                text: '+ Блюдо'
+                size_hint_x: 0.3
+                opacity: 1 if root.is_staff else 0
+                disabled: not root.is_staff
+                on_release: root.create_item()
+        Label:
+            text: root.error_text
+            color: 0.9, 0.2, 0.2, 1
+            size_hint_y: None
+            height: 30
+        RecycleView:
+            viewclass: 'MenuRow'
+            data: root.rv_data
+            RecycleBoxLayout:
+                default_size: None, dp(70)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+# ============ MENU ITEM ============
+<MenuItemScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 15
+        spacing: 10
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: root.title
+                font_size: 20
+                bold: True
+        TextInput:
+            id: name_input
+            hint_text: 'Название'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        TextInput:
+            id: desc_input
+            hint_text: 'Описание'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        TextInput:
+            id: price_input
+            hint_text: 'Цена (₽)'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        TextInput:
+            id: category_input
+            hint_text: 'Категория'
+            multiline: False
+            size_hint_y: None
+            height: 50
+        BoxLayout:
+            size_hint_y: None
+            height: 40
+            Label:
+                text: 'Доступно'
+            CheckBox:
+                id: available
+                active: True
+        FlatButton:
+            text: 'Сохранить'
+            size_hint_y: None
+            height: 55
+            on_release: root.save()
+            disabled: root.loading
+        SecondaryButton:
+            id: delete_btn
+            text: 'Удалить'
+            size_hint_y: None
+            height: 50
+            on_release: root.delete()
+        Widget:
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ CART ============
+<CartScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: 'Корзина'
+                font_size: 20
+                bold: True
+        RecycleView:
+            viewclass: 'CartRow'
+            data: root.rv_data
+            RecycleBoxLayout:
+                default_size: None, dp(55)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+        Label:
+            text: 'Итого: ' + root.total_text
+            size_hint_y: None
+            height: 35
+            bold: True
+            font_size: 18
+        Spinner:
+            text: 'pickup'
+            values: ['pickup', 'delivery']
+            size_hint_y: None
+            height: 45
+            on_text: root.delivery = self.text
+        FlatButton:
+            text: 'Оформить заказ'
+            size_hint_y: None
+            height: 55
+            on_release: root.place_order()
+            disabled: root.loading
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ ORDERS ============
+<OrdersScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: 'Заказы'
+                font_size: 20
+                bold: True
+            SecondaryButton:
+                text: 'Все/Мои'
+                size_hint_x: 0.35
+                on_release: root.toggle_scope()
+        Label:
+            text: root.error_text
+            color: 0.9, 0.2, 0.2, 1
+            size_hint_y: None
+            height: 30
+        RecycleView:
+            viewclass: 'OrderRow'
+            data: root.rv_data
+            RecycleBoxLayout:
+                default_size: None, dp(60)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ ORDER DETAIL ============
+<OrderScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 15
+        spacing: 10
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: root.title
+                font_size: 20
+                bold: True
+        Label:
+            text: 'Сумма: ' + root.total + '   Статус: ' + root.status
+            size_hint_y: None
+            height: 30
+        Label:
+            text: 'Позиции:'
+            size_hint_y: None
+            height: 25
+            bold: True
+        ScrollView:
+            BoxLayout:
+                id: items_box
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 4
+        Label:
+            text: 'Изменить статус:'
+            size_hint_y: None
+            height: 25
+        Spinner:
+            text: 'Выбрать...'
+            values: root.statuses
+            size_hint_y: None
+            height: 45
+            on_text:
+                if self.text in root.statuses and self.text != root.status: root.change_status(self.text)
+        SecondaryButton:
+            text: 'Удалить заказ'
+            size_hint_y: None
+            height: 45
+            on_release: root.delete()
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ FAVORITES ============
+<FavoritesScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: 'Избранное'
+                font_size: 20
+                bold: True
+        RecycleView:
+            viewclass: 'FavRow'
+            data: root.rv_data
+            RecycleBoxLayout:
+                default_size: None, dp(55)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ PROMOTIONS ============
+<PromotionsScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: 'Акции'
+                font_size: 20
+                bold: True
+            FlatButton:
+                text: '+ Акция'
+                size_hint_x: 0.35
+                on_release: root.create()
+        RecycleView:
+            viewclass: 'PromoRow'
+            data: root.rv_data
+            RecycleBoxLayout:
+                default_size: None, dp(70)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
+
+
+# ============ LOYALTY ============
+<LoyaltyScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: 50
+            SecondaryButton:
+                text: '< Назад'
+                size_hint_x: 0.35
+                on_release: root.go_back()
+            Label:
+                text: 'Бонусы'
+                font_size: 20
+                bold: True
+        RecycleView:
+            viewclass: 'LoyaltyRow'
+            data: root.rv_data
+            RecycleBoxLayout:
+                default_size: None, dp(50)
+                default_size_hint: 1, None
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: 'vertical'
+        Label:
+            text: 'Загрузка...' if root.loading else ''
+            size_hint_y: None
+            height: 25
+            color: 0.4, 0.4, 0.4, 1
